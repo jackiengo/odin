@@ -113,14 +113,14 @@
    [ant/card
     {:no-hovering true
      :title       title
-     :loading     @(subscribe [:overview/loading])}
+     :loading     (and @(subscribe [:overview/loading]) (empty? items))}
     (if (not-empty items)
       [notifications-list type items]
       [empty-view type])]])
 
 
 (defn notifications []
-  (let [payments (subscribe [:payments/by-statuses [:due :pending :failed]])
+  (let [payments (subscribe [:payments/by-statuses [:due :failed]])
         orders   (subscribe [:orders])
         members  (subscribe [:overview.accounts/end-of-term])
         move-out (subscribe [:overview.accounts/move-out])]

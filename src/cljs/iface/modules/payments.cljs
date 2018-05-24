@@ -32,6 +32,26 @@
 ;; events =======================================================================
 
 
+(defn- prepare-payment-query-params [params]
+  params)
+
+
+(reg-event-fx
+ :payments/query
+ [(rf/path path)]
+ (fn [{:keys [db]} [k params]]
+   {:dispatch [:ui/loading k true]
+    :graphql   {:query
+                [[:payments {:params (prepare-payment-query-params params)}
+                  [:id :method :type :autopay :amount :status :description
+                   :pstart :pend :paid_on :created :subtypes
+                   [:check [:id]]
+                   [:source [:id :name :type :last4]]
+                   [:account [:id :name]]]]]
+                :on-success [:payments/fetch-success k]
+                :on-failure [:graphql/failure k]}}))
+
+
 (reg-event-fx
  :payments/fetch
  [(rf/path path)]

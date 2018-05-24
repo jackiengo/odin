@@ -11,6 +11,7 @@
  (fn [accounts _]
    (->> (remove #(some? (get-in % [:active_license :move_out :date])) accounts)
         (remove #(< 45 (time/days-between (get-in % [:active_license :ends]))))
+        #_(remove #(> 30 (time/days-between (get-in % [:active_license :ends]))))
         (sort-by #(time/days-between (get-in % [:active_license :ends])) <))))
 
 
