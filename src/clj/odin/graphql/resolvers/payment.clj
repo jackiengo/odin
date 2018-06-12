@@ -118,7 +118,7 @@
   (tpayment/due payment))
 
 
-(defn late-fee
+(defn late-fee-paid
   "Any late fees associated with this `payment`."
   [_ _ payment]
   (->> (tpayment/associated payment)
@@ -365,6 +365,31 @@
 ;; payment?
 ;; TODO: We'll need to be able to update the fee amount before we make the
 ;; charge if they're going to be paying with a card
+
+
+(defn- past-first-courtesy?
+  "Check if there has been more than one late payment, the first being a courtesy."
+    [payments]
+    (< 1 (count (filter tpayment/overdue? payments))))
+
+
+(defn late-fee-due?
+  "Check if there is more than one late payment."
+  [_ teller payment]
+  (when (and (tpayment/due? payment) (tpayment/overdue? payment))
+    (let [customer (tpayment/customer payment)
+          payments (tpayment/query teller {:customers [customer]})]
+      (cond
+        (some tpayment/has-late-fee? payments)
+        true
+
+        (past-first-courtesy? payments)
+        true
+
+        :otherwise
+        false))))
+
+
 (defn pay-rent!
   [{:keys [requester teller conn] :as ctx} {:keys [id source] :as params} _]
   (let [payment (tpayment/by-id teller id)
@@ -483,7 +508,7 @@
    :payment/description  description
    :payment/due          due
    :payment/entity-id    (fn [_ _ payment] (td/id payment))
-   :payment/late-fee     late-fee
+   :payment/late-fee     late-fee-paid
    :payment/method       method
    :payment/order        order
    :payment/paid-on      paid-on
