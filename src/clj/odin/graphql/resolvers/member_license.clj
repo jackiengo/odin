@@ -74,11 +74,11 @@
   [{teller :teller} _ license]
   (when-some [payment (payment-within teller license (java.util.Date.))]
     (cond
-      (tpayment/due? payment)     :due
-      (tpayment/pending? payment) :pending
-      (tpayment/paid? payment)    :paid
-      (tpayment/overdue? payment) :overdue
-      :otherwise                  :due)))
+      (tpayment/due? payment)                       :due
+      (tpayment/pending? payment)                   :pending
+      (tpayment/paid? payment)                      :paid
+      (tpayment/overdue? payment (java.util.Date.)) :overdue
+      :otherwise                                    :due)))
 
 
 (defn status
