@@ -24,7 +24,7 @@
   [teller conn]
   (doseq [[cid ops-id deposit-id] (query-communities (d/db conn))]
     (let [p    (d/entity (d/db conn) cid)
-          fees (tproperty/construct-fees (tproperty/fee 0))]
+          fees (tproperty/construct-fees (tproperty/format-fee 0))]
       (tproperty/create! teller
                          (property/code p)
                          (property/name p)
