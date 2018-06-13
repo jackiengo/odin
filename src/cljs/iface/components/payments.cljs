@@ -255,7 +255,7 @@
 
 
 (defn payment-box
-  [{:keys [type amount due] :as payment} description]
+  [{:keys [type amount due late_fee_due] :as payment} description]
   [:div.box
    [:div.columns
     [:div.column.is-narrow
@@ -266,7 +266,7 @@
        [:p.fs2 description])]
 
     [:div.column.align-right
-     [:h3 (format/currency amount)]
+     [:h3 (format/currency (+ amount late_fee_due))]
      (if (#{:rent :deposit} type)
        [:p (str "Due by " (format/date-short due))])]]])
 

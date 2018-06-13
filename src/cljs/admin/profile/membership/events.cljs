@@ -34,8 +34,8 @@
                                [:id :rate :starts :ends :status :term
                                 [:unit [:id :number]]
                                 [:property [:id :name :code :cover_image_url]]
-                                [:payments [:id :description :type :amount :late_fee
-                                            :status :due :paid_on :pstart :pend]]]]]]]
+                                [:payments [:id :description :type :amount :late_fee_due
+                                            :late_fee_paid :status :due :paid_on :pstart :pend]]]]]]]
                :on-success [:member.fetch.license/success k]
                :on-failure [:graphql/failure k]}}))
 

@@ -35,7 +35,8 @@
  :member/rent-payments
  :<- [::membership]
  (fn [db [_ {:keys [status]}]]
-   (let [payments (get-in db [:license :payments])]
+   (let [payments (->> (get-in db [:license :payments])
+                       (sort-by :pstart))]
      (if (some? status)
        (filter #(= status (:status %)) payments)
        payments))))

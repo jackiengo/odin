@@ -26,6 +26,40 @@
             [toolbelt.datomic :as td]))
 
 ;; ==============================================================================
+;; constants ====================================================================
+;; ==============================================================================
+
+
+(def ^:private late-fee-percent
+  "The percentage applied to late rent payments (10%)."
+  0.1)
+
+
+;; ==============================================================================
+;; helpers ======================================================================
+;; ==============================================================================
+
+
+(defn- past-first-courtesy?
+  "Check if there has been more than one late payment, the first being a courtesy."
+  [payments]
+  (some? (tb/find-by #(tpayment/overdue? % (tpayment/paid-on %)) payments)))
+
+
+(defn- should-assess-late-fee?
+  "Check if there is more than one late payment and the payment is overdue."
+  [teller payment]
+  (when (and (or (tpayment/due? payment) (tpayment/failed? payment))
+             (tpayment/overdue? payment (java.util.Date.)))
+    (let [customer (tpayment/customer payment)
+          payments (tpayment/query teller {:customers     [customer]
+                                           :payment-types [:payment.type/rent]
+                                           :statuses      [:payment.status/paid
+                                                           :payment.status/pending]})]
+      (past-first-courtesy? payments))))
+
+
+;; ==============================================================================
 ;; fields =======================================================================
 ;; ==============================================================================
 
@@ -121,13 +155,38 @@
   (tpayment/due payment))
 
 
+(defn late-fee-due
+  "Any late fees associated with this `payment`."
+  [{teller :teller} _ payment]
+  (when (should-assess-late-fee? teller payment)
+    (* late-fee-percent (tpayment/amount payment))))
+
+
+(comment
+
+  (def teller odin.teller/teller)
+
+  (def conn odin.datomic/conn)
+
+  (let [payment (tpayment/by-entity teller (d/entity (d/db conn) 285873023223314))]
+    (should-assess-late-fee? teller payment))
+
+
+  (map (juxt td/id tpayment/due)
+       (tpayment/query teller {:payment-types [:payment.type/rent]
+                               :statuses      [:payment.status/due]}))
+
+  )
+
+
 (defn late-fee-paid
   "Any late fees associated with this `payment`."
   [_ _ payment]
-  (->> (tpayment/associated payment)
-       (filter tpayment/late-fee?)
-       (map tpayment/amount)
-       (apply +)))
+  (when-let [apayments (tpayment/associated payment)]
+    (->> apayments
+         (filter tpayment/late-fee?)
+         (map tpayment/amount)
+         (apply +))))
 
 
 (defn method
@@ -370,42 +429,29 @@
 ;; charge if they're going to be paying with a card
 
 
-(defn- past-first-courtesy?
-  "Check if there has been more than one late payment, the first being a courtesy."
-    [payments]
-    (< 1 (count (filter tpayment/overdue? payments))))
-
-
-(defn late-fee-due?
-  "Check if there is more than one late payment."
-  [_ teller payment]
-  (when (and (tpayment/due? payment) (tpayment/overdue? payment))
-    (let [customer (tpayment/customer payment)
-          payments (tpayment/query teller {:customers [customer]})]
-      (cond
-        (some tpayment/has-late-fee? payments)
-        true
-
-        (past-first-courtesy? payments)
-        true
-
-        :otherwise
-        false))))
-
-
 (defn pay-rent!
   [{:keys [requester teller conn] :as ctx} {:keys [id source] :as params} _]
   (let [payment (tpayment/by-id teller id)
         source  (tsource/by-id teller source)]
-    (try
-      (if-let [error (ensure-payment-allowed payment source)]
-        (resolve/resolve-as nil {:message error})
-        (let [py (tpayment/charge! payment {:source source})]
-          @(d/transact conn [(events/rent-payment-made requester (td/id py))])
-          py))
-      (catch Throwable t
-        (timbre/error t ::pay-rent {:payment-id id :source-id (tsource/id source)})
-        (resolve/resolve-as nil {:message (error-message t)})))))
+    (letfn [(-charge! []
+              (let [py (tpayment/charge! payment {:source source})]
+                @(d/transact conn [(events/rent-payment-made requester (td/id py))])
+                py))
+            (-late-fee! []
+              (when (should-assess-late-fee? teller payment)
+                (let [amount (* late-fee-percent (tpayment/amount payment))
+                      apy    (tpayment/add-late-fee! payment amount)]
+                  (tpayment/charge! apy {:source source}))))
+            (-pay! []
+              (-late-fee!)
+              (-charge!))]
+      (try
+        (if-let [error (ensure-payment-allowed payment source)]
+          (resolve/resolve-as nil {:message error})
+          (-pay!))
+        (catch Throwable t
+          (timbre/error t ::pay-rent {:payment-id id :source-id (tsource/id source)})
+          (resolve/resolve-as nil {:message (error-message t)}))))))
 
 
 (defn pay-deposit!
@@ -502,30 +548,31 @@
 
 (def resolvers
   {;; fields
-   :payment/id           (fn [_ _ payment] (tpayment/id payment))
-   :payment/account      account
-   :payment/amount       amount
-   :payment/autopay?     autopay?
-   :payment/check        check
-   :payment/created      created
-   :payment/description  description
-   :payment/due          due
-   :payment/entity-id    (fn [_ _ payment] (td/id payment))
-   :payment/late-fee     late-fee-paid
-   :payment/method       method
-   :payment/order        order
-   :payment/paid-on      paid-on
-   :payment/pend         period-end
-   :payment/pstart       period-start
-   :payment/property     property
-   :payment/source       source
-   :payment/status       status
-   :payment/subtypes     subtypes
-   :payment/type         payment-type
+   :payment/id            (fn [_ _ payment] (tpayment/id payment))
+   :payment/account       account
+   :payment/amount        amount
+   :payment/autopay?      autopay?
+   :payment/check         check
+   :payment/created       created
+   :payment/description   description
+   :payment/due           due
+   :payment/entity-id     (fn [_ _ payment] (td/id payment))
+   :payment/late-fee-paid late-fee-paid
+   :payment/late-fee-due  late-fee-due
+   :payment/method        method
+   :payment/order         order
+   :payment/paid-on       paid-on
+   :payment/pend          period-end
+   :payment/pstart        period-start
+   :payment/property      property
+   :payment/source        source
+   :payment/status        status
+   :payment/subtypes      subtypes
+   :payment/type          payment-type
    ;; queries
-   :payment/list         payments
+   :payment/list          payments
    ;; mutations
-   :payment/create!      create-payment!
-   :payment/pay-rent!    pay-rent!
-   :payment/pay-deposit! pay-deposit!
-   :payment/pay!         pay!})
+   :payment/create!       create-payment!
+   :payment/pay-rent!     pay-rent!
+   :payment/pay-deposit!  pay-deposit!
+   :payment/pay!          pay!})

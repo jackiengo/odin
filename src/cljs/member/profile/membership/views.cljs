@@ -176,7 +176,7 @@
   (let [sources    (subscribe [:payment.sources/verified-banks])
         is-loading (subscribe [:ui/loading? :payment-sources/fetch])
         is-paying  (subscribe [:ui/loading? :member/pay-rent-payment!])]
-    (fn [{:keys [id amount due pstart pend late_fee] :as payment}]
+    (fn [{:keys [id amount due pstart pend late_fee_due] :as payment}]
       [ant/card
        [:div.columns
         [:div.column.is-2
@@ -193,8 +193,8 @@
          [ant/tooltip
           {:title (cond
                     (empty? @sources) (r/as-element [link-bank-tooltip-title])
-                    (> late_fee 0)    (format/format "A late fee of %s has been added."
-                                                     (format/currency late_fee))
+                    (> late_fee_due 0)    (format/format "A late fee of %s has been added."
+                                                     (format/currency late_fee_due))
                     :otherwise        nil)}
           [ant/button
            {:type     (if (rent-overdue? payment) :danger :primary)
@@ -202,7 +202,7 @@
             :on-click #(dispatch [:modal/show id])
             :loading  @is-loading
             :disabled (empty? @sources)}
-           (format/format "Pay Now (%s)" (format/currency (+ amount late_fee)))]]]]])))
+           (format/format "Pay Now (%s)" (format/currency (+ amount late_fee_due)))]]]]])))
 
 
 (defn- rent-due-cards
