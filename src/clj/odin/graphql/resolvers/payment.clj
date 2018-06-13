@@ -3,6 +3,7 @@
             [blueprints.models.events :as events]
             [blueprints.models.order :as order]
             [blueprints.models.payment :as payment]
+            [blueprints.models.property :as property]
             [blueprints.models.security-deposit :as deposit]
             [blueprints.models.service :as service]
             [blueprints.models.source :as source]
@@ -95,21 +96,23 @@
 (defn description
   "A description of this `payment`. Varies based on payment type."
   [{:keys [teller conn]} _ payment]
-  (letfn [(-rent-desc [payment]
-            (->> [(tpayment/period-start payment) (tpayment/period-end payment)]
-                 (map date/short)
-                 (apply format "rent for %s-%s")))
-          (-order-desc [payment]
-            (let [order        (order/by-payment (d/db conn) (teller/entity payment))
-                  service-desc (service/name (order/service order))]
-              (or (when-let [d (order/summary order)]
-                    (format "%s (%s)" d service-desc))
-                  service-desc)))]
-    (case (tpayment/type payment)
-      :payment.type/rent    (-rent-desc payment)
-      :payment.type/order   (-order-desc payment)
-      :payment.type/deposit (deposit-desc teller (tcustomer/account (tpayment/customer payment)) payment)
-      nil)))
+  (let [account  (-> payment tpayment/customer tcustomer/account)
+        property (account/current-property (d/db conn) account)]
+    (letfn [(-rent-desc [payment]
+             (->> [(tpayment/period-start payment) (tpayment/period-end payment)]
+                  (map (comp date/short #(date/tz-uncorrected % (property/time-zone property))))
+                  (apply format "rent for %s-%s")))
+           (-order-desc [payment]
+             (let [order        (order/by-payment (d/db conn) (teller/entity payment))
+                   service-desc (service/name (order/service order))]
+               (or (when-let [d (order/summary order)]
+                     (format "%s (%s)" d service-desc))
+                   service-desc)))]
+     (case (tpayment/type payment)
+       :payment.type/rent    (-rent-desc payment)
+       :payment.type/order   (-order-desc payment)
+       :payment.type/deposit (deposit-desc teller (tcustomer/account (tpayment/customer payment)) payment)
+       nil))))
 
 
 (defn due
