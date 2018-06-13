@@ -366,53 +366,55 @@
 
 
   :payment
-  {:fields {:id          {:type    (non-null :ID)
-                          :resolve :payment/id}
-            :account     {:type    (non-null :account)
-                          :resolve :payment/account}
-            :amount      {:type    (non-null Float)
-                          :resolve :payment/amount}
-            :autopay     {:type        Boolean
-                          :description "Is this an autopay payment?"
-                          :resolve     :payment/autopay?}
-            :check       {:type    :check
-                          :resolve :payment/check}
-            :created     {:type    (non-null :Instant)
-                          :resolve :payment/created}
-            :description {:type    String
-                          :resolve :payment/description}
-            :due         {:type    :Instant
-                          :resolve :payment/due}
-            :ext_id      {:type        String
-                          :description "DEPRECATED: The Stripe external id."
-                          :resolve     :payment/id}
-            :late_fee    {:type    Float
-                          :resolve :payment/late-fee}
-            :method      {:type    :payment_method
-                          :resolve :payment/method}
-            :order       {:type    :order
-                          :resolve :payment/order}
-            :paid_on     {:type    :Instant
-                          :resolve :payment/paid-on}
-            :pend        {:type        :Instant
-                          :description "Period end."
-                          :resolve     :payment/pend}
-            :property    {:type        :property
-                          :description "The property that the member that made this payment is associated with."
-                          :resolve     :payment/property}
-            :pstart      {:type        :Instant
-                          :description "Period start."
-                          :resolve     :payment/pstart}
-            :source      {:type    :payment_source
-                          :resolve :payment/source}
-            :status      {:type    :payment_status
-                          :resolve :payment/status}
-            :subtypes    {:type    (list :Keyword)
-                          :resolve :payment/subtypes}
-            :type        {:type    :payment_type
-                          :resolve :payment/type}
-            :uuid        {:type    (non-null String)
-                          :resolve :payment/id}}}
+  {:fields {:id            {:type    (non-null :ID)
+                            :resolve :payment/id}
+            :account       {:type    (non-null :account)
+                            :resolve :payment/account}
+            :amount        {:type    (non-null Float)
+                            :resolve :payment/amount}
+            :autopay       {:type        Boolean
+                            :description "Is this an autopay payment?"
+                            :resolve     :payment/autopay?}
+            :check         {:type    :check
+                            :resolve :payment/check}
+            :created       {:type    (non-null :Instant)
+                            :resolve :payment/created}
+            :description   {:type    String
+                            :resolve :payment/description}
+            :due           {:type    :Instant
+                            :resolve :payment/due}
+            :ext_id        {:type        String
+                            :description "DEPRECATED: The Stripe external id."
+                            :resolve     :payment/id}
+            :late_fee_due  {:type    Float
+                            :resolve :payment/late-fee-due}
+            :late_fee_paid {:type    Float
+                            :resolve :payment/late-fee-paid}
+            :method        {:type    :payment_method
+                            :resolve :payment/method}
+            :order         {:type    :order
+                            :resolve :payment/order}
+            :paid_on       {:type    :Instant
+                            :resolve :payment/paid-on}
+            :pend          {:type        :Instant
+                            :description "Period end."
+                            :resolve     :payment/pend}
+            :property      {:type        :property
+                            :description "The property that the member that made this payment is associated with."
+                            :resolve     :payment/property}
+            :pstart        {:type        :Instant
+                            :description "Period start."
+                            :resolve     :payment/pstart}
+            :source        {:type    :payment_source
+                            :resolve :payment/source}
+            :status        {:type    :payment_status
+                            :resolve :payment/status}
+            :subtypes      {:type    (list :Keyword)
+                            :resolve :payment/subtypes}
+            :type          {:type    :payment_type
+                            :resolve :payment/type}
+            :uuid          {:type    (non-null String)
+                            :resolve :payment/id}}}
 
 
   :payment_source
