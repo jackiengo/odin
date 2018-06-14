@@ -223,7 +223,9 @@
             :new_license           {:type    :license
                                     :resolve (:get :license-transition/new-license)}
             :date                  {:type    :Instant
-                                    :resolve (:get :license-transition/date)}}}
+                                    :resolve (:get :license-transition/date)}
+            :notice_date           {:type    :Instant
+                                    :resolve (:get :license-transition/notice-date)}}}
 
 
   :license
