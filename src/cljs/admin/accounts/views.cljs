@@ -624,28 +624,28 @@
       "Begin Move-out Process"])])
 
 
-(defn move-out-start []
-  [:div
-   [ant/alert
-    {:type        :warning
-     :show-icon   true
-     :message     "Before you begin:"
-     :description "Ensure that you have received written notice from the member stating their intent to move out."}]
-
-   [:br]
-   [:div.has-text-centered
-    [ant/button
-     {:size     :large
-      :on-click #(dispatch [:accounts.entry.transition/update :written-notice true])}
-     "Written notice has been given"]]])
-
-
 (defn- move-out-form-item
   [question input]
   [:div
    {:style {:margin-bottom "1em"}}
    question
    input])
+
+
+(defn move-out-start []
+  [:div
+   [ant/alert
+    {:type        :warning
+     :show-icon   true
+     :message     "Before you begin:"
+     :description "Ensure that you have received written notice from the member stating their intent to move out. The date on which they submitted notice will be used to calculate things like termination fees."}]
+
+   [:br]
+   [:div.has-text-centered
+    [:p.bold "When did the member submit their written notice?"]
+    [form/date-picker
+     {:style {:width "50%"}
+      :on-change #(dispatch [:accounts.entry.transition/add-notice %])}]]])
 
 
 (defn- default-moment

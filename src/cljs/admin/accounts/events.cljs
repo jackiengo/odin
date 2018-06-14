@@ -473,17 +473,26 @@
    (assoc db :transition-form {})))
 
 
+(reg-event-db
+ :accounts.entry.transition/add-notice
+ [(path db/path)]
+ (fn [db [_ date]]
+   (assoc db :transition-form {:notice-date    date
+                               :written-notice true})))
+
+
 (reg-event-fx
  :accounts.entry/move-out!
  [(path db/path)]
- (fn [db [k license-id {:keys [date asana-task] :as form-data}]]
+ (fn [db [k license-id {:keys [date asana-task notice-date] :as form-data}]]
    {:dispatch-n [[:ui/loading k true]
                  [:accounts.entry.transition/hide]]
     :graphql    {:mutation
                  [[:move_out_create {:params {:current_license license-id
                                               :type            :move_out
                                               :date            (.toISOString date)
-                                              :asana_task      asana-task}}
+                                              :asana_task      asana-task
+                                              :notice_date     (.toISOString notice-date)}}
                    [:id [:account [:id]]]]]
                  :on-success [::move-out-success k]
                  :on-failure [:graphql/failure k]}}))
