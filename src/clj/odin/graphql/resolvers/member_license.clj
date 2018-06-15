@@ -91,7 +91,13 @@
   "All rent payments made by the owner of this license."
   [{teller :teller} _ license]
   (tpayment/query teller {:customers     [(license-customer teller license)]
-                          :payment-types [:payment.type/rent]}))
+                          :payment-types [:payment.type/rent]
+                          ;; TODO: This is a hack! Probably not a good way to
+                          ;; query for rent payments. This field resolver should
+                          ;; be removed entirely and the payments query should
+                          ;; be used instead.
+                          :limit         100
+                          :offset        0}))
 
 
 (defn license-transition-type
