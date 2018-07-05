@@ -23,16 +23,18 @@
         :payment.status/paid     "Paid"
         :payment.status/pending  "Pending"
         :payment.status/failed   "Failed"
+        :payment.status/refund   "Refund"
 
         :payment.method/stripe-charge  "Stripe Charge"
         :payment.method/stripe-invoice "Stripe Invoice"
         :payment.method/check          "Check"
 
-        :payment.for/rent    "Rent Payment"
-        :payment.for/deposit "Security Deposit"
-        :payment.for/order   "Order"
-        :payment.for/fee     "Fee"
-        :payment.for/other   "Uncategorized"
+        :payment.type/rent     "Rent Payment"
+        :payment.type/deposit  "Security Deposit"
+        :payment.type/order    "Order"
+        :payment.type/fee      "Fee"
+        :payment.type/late-fee "Late Fee"
+        :payment.type/other    "Uncategorized"
 
         :payments            "Payments"
         :sources             "Payment Methods"
@@ -104,6 +106,7 @@
       "pending"  (-hollow "Pending")
       "failed"   (-hollow "Failed")
       "paid"     (-hollow "Paid")
+      "refund"   (-hollow "Refund")
       [:span])))
 
 
@@ -115,9 +118,11 @@
              [:span.icon.extra-small [:i {:class (str "fa " icon)}]]
              txt])]
     (case status
-      "rent"    (-tag "fa-home" "Rent Payment")
-      "deposit" (-tag "fa-shield" "Security Deposit")
-      "order"   (-tag "fa-smile-o" "Service Order")
+      "rent"     (-tag "fa-home" "Rent Payment")
+      "deposit"  (-tag "fa-shield" "Security Deposit")
+      "order"    (-tag "fa-smile-o" "Service Order")
+      "late_fee" (-tag "fa-exclamation-circle" "Late Fee")
+      "fee"      (-tag "fa-exclamation-circle" "Fee")
       [:span])))
 
 
@@ -126,15 +131,16 @@
   ([reason]
    [payment-for-icon reason ""])
   ([reason icon-size]
-   (when reason
-     [ant/tooltip {:title     (translate (keyword "payment.for" reason))
+   (when (some? reason)
+     [ant/tooltip {:title     (translate (keyword "payment.type" (string/replace reason #"_" "-")))
                    :placement "right"}
       [:span.icon.has-tooltip {:class icon-size}
        (case reason
-         "rent"    [:i.fa.fa-home    {:class icon-size}]
-         "deposit" [:i.fa.fa-shield  {:class icon-size}]
-         "order"   [:i.fa.fa-smile-o {:class icon-size}]
-         "")]])))
+         "rent"     [:i.fa.fa-home                 {:class icon-size}]
+         "deposit"  [:i.fa.fa-shield               {:class icon-size}]
+         "order"    [:i.fa.fa-smile-o              {:class icon-size}]
+         "late_fee" [:i.fa.fa-exclamation-circle   {:class icon-size}]
+         "fee"      [:i.fa.fa-exclamation-circle   {:class icon-size}])]])))
 
 
 (defn render-payment-date
@@ -247,10 +253,10 @@
 
 (defn- icon-class [payment-type]
   (case payment-type
-    :deposit "fa-shield"
-    :rent    "fa-home"
-    :fee     "fa-exclamation-circle"
-    :order   "fa-smile-o"
+    :deposit  "fa-shield"
+    :rent     "fa-home"
+    :late-fee "fa-exclamation-circle"
+    :order    "fa-smile-o"
     ""))
 
 
@@ -261,7 +267,7 @@
     [:div.column.is-narrow
      [:span.icon.is-large [:i {:class (str "fa fa-3x " (icon-class type))}]]]
     [:div.column.is-two-thirds
-     [:h3 (translate (keyword "payment.for" (name (:type payment))))]
+     [:h3 (translate (keyword "payment.type" (string/replace (name (:type payment)) #"_" "-")))]
      (when (some? description)
        [:p.fs2 description])]
 
