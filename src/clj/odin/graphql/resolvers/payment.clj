@@ -480,9 +480,9 @@
 
 (defmethod authorization/authorized? :payment/pay-deposit!
   [{teller :teller} account params]
-  (let [payment  (tpayment/by-id teller (:id params))
-        customer (tcustomer/by-account teller account)]
-    (= customer (tpayment/customer payment))))
+  (let [source (tsource/by-id teller (:source params))
+        customer (tsource/customer source)]
+    (= customer (tcustomer/by-account teller account))))
 
 
 (defmethod authorization/authorized? :payment/pay!

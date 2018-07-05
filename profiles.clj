@@ -7,12 +7,13 @@
                       [binaryage/devtools "0.9.4"]
                       [com.datomic/datomic-free "0.9.5544"]
                       [devcards "0.2.4"]
-                      [starcity/reactor "1.11.0"
+                      [starcity/reactor "1.11.1"
                        :exclusions [ring cheshire clj-time
                                     org.apache.httpcomponents/httpcore
                                     commons-codec
                                     org.clojure/core.async
-                                    starcity/blueprints]]]
+                                    starcity/blueprints
+                                    starcity/teller]]]
        :repl-options {:nrepl-middleware [cemerick.piggieback/wrap-cljs-repl]}
 
        :cooper {"main"     ["sass" "--watch" "-E" "UTF-8" "style/sass/main.sass:resources/public/assets/css/styles.css"]
