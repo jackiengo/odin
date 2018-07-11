@@ -1,14 +1,16 @@
 $icon-small-size: 17px;
-$icon-in-text-positioning: 3px;
+$icon-in-text-positioning: 10px;
 
 .icon-small {
   width: $icon-small-size;
   height: $icon-small-size;
 }
 
-// if the small icon is in a paragraph, adjust the baseline
+// if the SVG (IMPORTANT) icon is in a paragraph, adjust the baseline
 p .icon-small {
-  position: absolute;
+  position: relative;
+  width: 32px;
+  height: 30px;
   top: $icon-in-text-positioning;
 }
 
